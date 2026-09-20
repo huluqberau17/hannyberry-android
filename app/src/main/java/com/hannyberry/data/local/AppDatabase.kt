@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [CategoryEntity::class, TransactionEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -22,7 +22,12 @@ abstract class AppDatabase : RoomDatabase() {
                 context.applicationContext,
                 AppDatabase::class.java,
                 "hannyberry.db",
-            ).build().also { instance = it }
+            )
+                // Aplikasi masih versi awal dan datanya bisa disinkron ulang dari
+                // server, jadi skema lama dibuang alih-alih bikin app gagal buka.
+                .fallbackToDestructiveMigration()
+                .build()
+                .also { instance = it }
         }
     }
 }

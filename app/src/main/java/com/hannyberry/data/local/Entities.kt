@@ -4,9 +4,16 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.util.UUID
 
+/**
+ * Salinan lokal dari data server.
+ *
+ * `dirty = true` berarti baris ini dibuat/diubah di perangkat dan belum
+ * terkirim ke server. `deletedAt` adalah penghapusan lunak supaya riwayat
+ * tidak hilang dan penghapusan bisa ikut tersinkron.
+ */
 @Entity(tableName = "categories")
 data class CategoryEntity(
-    @PrimaryKey val id: String = UUID.randomUUID().toString(),
+    @PrimaryKey val id: String,
     val name: String,
     val transactionType: String,
     val active: Boolean = true,
@@ -18,12 +25,11 @@ data class CategoryEntity(
 data class TransactionEntity(
     @PrimaryKey val id: String = UUID.randomUUID().toString(),
     val amount: Long,
-    val type: String,
-    val categoryId: String,
+    val transactionType: String,
+    val transactionDate: String,
+    val categoryId: String? = null,
     val categoryName: String? = null,
-    val occurredOn: String,
-    val note: String? = null,
-    val dirty: Boolean = false,
+    val notes: String? = null,
+    val dirty: Boolean = true,
     val deletedAt: String? = null,
-    val updatedAt: String = "",
 )

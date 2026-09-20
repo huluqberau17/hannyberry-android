@@ -3,7 +3,6 @@ package com.hannyberry.data.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
-import retrofit2.http.Header
 import retrofit2.http.POST
 
 interface HannyBerryApi {
@@ -12,4 +11,13 @@ interface HannyBerryApi {
 
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
+
+    @GET("transactions")
+    suspend fun transactions(): Response<List<TransactionDto>>
+
+    /** Kirim baris offline sekaligus; idempotent karena id dibuat di perangkat. */
+    @POST("transactions/sync")
+    suspend fun syncTransactions(
+        @Body items: List<TransactionUpload>,
+    ): Response<List<TransactionDto>>
 }

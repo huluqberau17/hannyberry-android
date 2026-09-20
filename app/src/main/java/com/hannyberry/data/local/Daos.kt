@@ -8,29 +8,23 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface CategoryDao {
-    @Query("SELECT * FROM categories WHERE deletedAt IS NULL AND active = 1 ORDER BY transactionType, name")
+    @Query("SELECT * FROM categories WHERE deletedAt IS NULL AND active = 1 ORDER BY name")
     fun observeActive(): Flow<List<CategoryEntity>>
 
-    @Query("SELECT * FROM categories WHERE dirty = 1")
-    suspend fun dirty(): List<CategoryEntity>
+    @Query("SELECT * FROM categories WHERE transactionType = :type AND deletedAt IS NULL AND active = 1 ORDER BY name")
+    suspend fun forType(type: String): List<CategoryEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsertAll(items: List<CategoryEntity>): Unit
-
-    @Query("UPDATE categories SET dirty = 0 WHERE id IN (:ids)")
-    suspend fun markClean(ids: List<String>): Unit
 }
 
 @Dao
 interface TransactionDao {
-    @Query("SELECT * FROM transactions WHERE deletedAt IS NULL ORDER BY occurredOn DESC, updatedAt DESC")
+    @Query("SELECT * FROM transactions WHERE deletedAt IS NULL ORDER BY transactionDate DESC, rowid DESC")
     fun observeAll(): Flow<List<TransactionEntity>>
 
-    @Query("SELECT * FROM transactions WHERE dirty = 1")
+    @Query("SELECT * FROM transactions WHERE dirty = 1 AND deletedAt IS NULL")
     suspend fun dirty(): List<TransactionEntity>
-
-    @Query("SELECT * FROM transactions WHERE id = :id")
-    suspend fun byId(id: String): TransactionEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(item: TransactionEntity): Unit
@@ -41,6 +35,6 @@ interface TransactionDao {
     @Query("UPDATE transactions SET dirty = 0 WHERE id IN (:ids)")
     suspend fun markClean(ids: List<String>): Unit
 
-    @Query("UPDATE transactions SET deletedAt = :deletedAt, dirty = 1 WHERE id = :id")
-    suspend fun softDelete(id: String, deletedAt: String): Unit
+    @Query("DELETE FROM transactions WHERE id IN (:ids)")
+    suspend fun deleteByIds(ids: List<String>): Unit
 }

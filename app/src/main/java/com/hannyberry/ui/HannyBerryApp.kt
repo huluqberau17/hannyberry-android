@@ -23,11 +23,17 @@ import com.hannyberry.ui.components.ActionButton
 import com.hannyberry.ui.components.InputField
 
 @Composable
-fun HannyBerryApp(authViewModel: AuthViewModel) {
+fun HannyBerryApp(
+    authViewModel: AuthViewModel,
+    transactionViewModel: TransactionViewModel,
+) {
     val state by authViewModel.state.collectAsState()
 
     if (state.loggedIn) {
-        MainScreen(onLogout = authViewModel::logout)
+        MainScreen(
+            transactionViewModel = transactionViewModel,
+            onLogout = authViewModel::logout,
+        )
     } else {
         LoginScreen(state, authViewModel)
     }
