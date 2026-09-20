@@ -1,5 +1,6 @@
 package com.hannyberry.ui
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,10 +10,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
@@ -47,6 +51,13 @@ private val rupiahFormat: NumberFormat =
     NumberFormat.getCurrencyInstance(Locale("id", "ID")).apply { maximumFractionDigits = 0 }
 
 fun formatRupiah(value: Long): String = rupiahFormat.format(value)
+
+/** Label pendek untuk chip; teks panjang bikin chip terpotong di layar sempit. */
+private val CHIP_LABELS = mapOf(
+    "INCOME" to "Masuk",
+    "COST_OF_GOODS" to "Modal",
+    "OPERATING_EXPENSE" to "Keluar",
+)
 
 @Composable
 fun MainScreen(
@@ -89,13 +100,20 @@ fun MainScreen(
 
 @Composable
 private fun ScreenColumn(padding: PaddingValues, content: @Composable () -> Unit) {
-    Box(modifier = Modifier.padding(padding)) {
+    // Layar landscape di HP rendah, jadi isi tab harus bisa digeser dan form
+    // tetap terlihat saat keyboard muncul.
+    Box(modifier = Modifier.padding(padding).fillMaxSize()) {
         Column(
-            modifier = Modifier.fillMaxSize().padding(20.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .imePadding()
+                .padding(20.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Spacer(modifier = Modifier.height(8.dp))
             content()
+            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
@@ -148,13 +166,32 @@ private fun AddTransactionTab(padding: PaddingValues, viewModel: TransactionView
         Text("Tambah Transaksi", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
         Text("Tersimpan di perangkat dulu, lalu dikirim saat sinkron.", style = MaterialTheme.typography.bodyMedium)
 
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             TransactionFormState.TYPES.forEach { type ->
                 FilterChip(
                     selected = form.type == type,
                     onClick = { viewModel.typeChanged(type) },
-                    label = { Text(TYPE_LABELS[type] ?: type) },
+                    label = { Text(CHIP_LABELS[type] ?: type) },
                 )
+            }
+        }
+
+        if (form.categories.isNotEmpty()) {
+            Text("Kategori", style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                form.categories.forEach { category ->
+                    FilterChip(
+                        selected = form.categoryId == category.id,
+                        onClick = { viewModel.categoryChanged(category) },
+                        label = { Text(category.name) },
+                    )
+                }
             }
         }
 

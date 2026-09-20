@@ -1,8 +1,10 @@
 package com.hannyberry.data
 
 import com.hannyberry.data.local.AppDatabase
+import com.hannyberry.data.local.CategoryEntity
 import com.hannyberry.data.local.TransactionEntity
 import com.hannyberry.data.remote.ApiClient
+import com.hannyberry.data.remote.CategoryDto
 import com.hannyberry.data.remote.HannyBerryApi
 import com.hannyberry.data.remote.TransactionDto
 import com.hannyberry.data.remote.TransactionUpload
@@ -23,6 +25,11 @@ class TransactionRepository(
     private val api: HannyBerryApi by lazy { ApiClient.api { tokens.token() } }
 
     fun observeAll(): Flow<List<TransactionEntity>> = db.transactionDao().observeAll()
+
+    fun observeCategories(): Flow<List<CategoryEntity>> = db.categoryDao().observeActive()
+
+    suspend fun categoriesForType(type: String): List<CategoryEntity> =
+        db.categoryDao().forType(type)
 
     suspend fun add(
         amount: Long,
@@ -68,6 +75,11 @@ class TransactionRepository(
     /** Ambil data server sebagai sumber kebenaran, lalu sisipkan yang lokal. */
     private suspend fun refreshFromServer(): SyncOutcome {
         return try {
+            val categoryResponse = api.categories()
+            if (categoryResponse.isSuccessful) {
+                db.categoryDao().upsertAll(categoryResponse.body().orEmpty().map { it.toEntity() })
+            }
+
             val response = api.transactions()
             if (!response.isSuccessful) return SyncOutcome.failed("Gagal memuat transaksi (HTTP ${response.code()}).")
             val remote = response.body().orEmpty().map { it.toEntity() }
@@ -97,6 +109,15 @@ class TransactionRepository(
         notes = notes,
         categoryId = categoryId,
         categoryName = categoryName,
+        dirty = false,
+        deletedAt = null,
+    )
+
+    private fun CategoryDto.toEntity() = CategoryEntity(
+        id = id,
+        name = name,
+        transactionType = transactionType,
+        active = active,
         dirty = false,
         deletedAt = null,
     )

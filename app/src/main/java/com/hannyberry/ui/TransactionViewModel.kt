@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.hannyberry.data.SyncOutcome
 import com.hannyberry.data.TransactionRepository
+import com.hannyberry.data.local.CategoryEntity
 import com.hannyberry.data.local.TransactionEntity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -19,6 +20,9 @@ data class TransactionFormState(
     val type: String = TYPES.first(),
     val dateText: String = LocalDate.now().toString(),
     val notes: String = "",
+    val categoryId: String? = null,
+    val categoryName: String? = null,
+    val categories: List<CategoryEntity> = emptyList(),
     val saving: Boolean = false,
     val error: String? = null,
 ) {
@@ -46,10 +50,32 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
     private val _syncing = MutableStateFlow(false)
     val syncing: StateFlow<Boolean> = _syncing.asStateFlow()
 
+    init {
+        loadCategories()
+    }
+
     fun amountChanged(value: String) = update { copy(amountText = value.filter(Char::isDigit), error = null) }
-    fun typeChanged(value: String) = update { copy(type = value, error = null) }
+
+    fun typeChanged(value: String) {
+        // Kategori terikat pada jenis transaksi, jadi pilihan lama harus dibuang
+        // saat jenisnya berganti.
+        update { copy(type = value, categoryId = null, categoryName = null, error = null) }
+        loadCategories(value)
+    }
+
+    fun categoryChanged(category: CategoryEntity) = update {
+        copy(categoryId = category.id, categoryName = category.name, error = null)
+    }
+
     fun dateChanged(value: String) = update { copy(dateText = value, error = null) }
     fun notesChanged(value: String) = update { copy(notes = value, error = null) }
+
+    fun loadCategories(type: String = _form.value.type) {
+        viewModelScope.launch {
+            val items = repository.categoriesForType(type)
+            update { copy(categories = items) }
+        }
+    }
 
     private fun update(block: TransactionFormState.() -> TransactionFormState) {
         _form.value = _form.value.block()
@@ -74,7 +100,9 @@ class TransactionViewModel(private val repository: TransactionRepository) : View
                 amount = amount,
                 transactionType = current.type,
                 transactionDate = date,
-                notes = current.notes,
+                notes = current.notes.trim().ifBlank { null },
+                categoryId = current.categoryId,
+                categoryName = current.categoryName,
             )
             _form.value = TransactionFormState()
             _syncMessage.value = "Transaksi disimpan di perangkat."

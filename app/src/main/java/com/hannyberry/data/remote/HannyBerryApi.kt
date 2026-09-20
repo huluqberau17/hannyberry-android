@@ -12,6 +12,9 @@ interface HannyBerryApi {
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
 
+    @GET("categories")
+    suspend fun categories(): Response<List<CategoryDto>>
+
     @GET("transactions")
     suspend fun transactions(): Response<List<TransactionDto>>
 
