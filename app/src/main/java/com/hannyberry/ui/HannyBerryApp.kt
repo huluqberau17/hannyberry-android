@@ -3,41 +3,73 @@ package com.hannyberry.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import com.hannyberry.data.remote.ApiConfig
 
 @Composable
-fun HannyBerryApp() {
-    var email by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var loggedIn by remember { mutableStateOf(false) }
-
+fun HannyBerryApp(viewModel: AuthViewModel) {
+    val state by viewModel.state.collectAsState()
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Text("HannyBerry", style = MaterialTheme.typography.headlineMedium)
-        if (!loggedIn) {
-            Text("Masuk ke usaha stroberi Anda")
-            TextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-            TextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
-            Button(onClick = { loggedIn = email.isNotBlank() && password.isNotBlank() }) {
-                Text("Masuk")
-            }
+        if (state.loggedIn) {
+            SignedInScreen(onLogout = viewModel::logout)
         } else {
-            Text("Mode offline-first siap")
-            Text("Data transaksi akan disimpan di perangkat dan disinkronkan saat online.")
-            Button(onClick = { loggedIn = false }) { Text("Keluar") }
+            LoginScreen(state, viewModel)
         }
     }
+}
+
+@Composable
+private fun LoginScreen(state: AuthUiState, viewModel: AuthViewModel) {
+    Text("Masuk ke usaha stroberi Anda")
+    OutlinedTextField(
+        value = state.email,
+        onValueChange = viewModel::emailChanged,
+        label = { Text("Email") },
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+    )
+    OutlinedTextField(
+        value = state.password,
+        onValueChange = viewModel::passwordChanged,
+        label = { Text("Password") },
+        singleLine = true,
+        visualTransformation = PasswordVisualTransformation(),
+        modifier = Modifier.fillMaxWidth(),
+    )
+    state.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+    Button(
+        onClick = viewModel::login,
+        enabled = !state.loading,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        if (state.loading) CircularProgressIndicator(modifier = Modifier.padding(end = 8.dp))
+        Text(if (state.loading) "Memproses…" else "Masuk")
+    }
+    Text("Server: ${ApiConfig.BASE_URL}", style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun SignedInScreen(onLogout: () -> Unit) {
+    Text("Mode offline-first siap")
+    Text("Data transaksi disimpan di perangkat ini dan disinkronkan ketika online.")
+    OutlinedButton(onClick = onLogout) { Text("Keluar") }
 }
