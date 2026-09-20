@@ -3,12 +3,13 @@ package com.hannyberry.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.PieChart
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -18,6 +19,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hannyberry.ui.components.ActionButton
+import com.hannyberry.ui.theme.Cream
 import com.hannyberry.ui.theme.HannyBerryTheme
 
 @Composable
@@ -42,7 +44,7 @@ fun HannyBerryApp() {
                     onClick = { currentTab = 1 }
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.PieChart, contentDescription = "Laporan") },
+                    icon = { Icon(Icons.Default.BarChart, contentDescription = "Laporan") },
                     label = { Text("Laporan") },
                     selected = currentTab == 2,
                     onClick = { currentTab = 2 }
