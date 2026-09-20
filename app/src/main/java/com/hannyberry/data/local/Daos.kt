@@ -15,10 +15,10 @@ interface CategoryDao {
     suspend fun dirty(): List<CategoryEntity>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertAll(items: List<CategoryEntity>)
+    suspend fun upsertAll(items: List<CategoryEntity>): Unit
 
     @Query("UPDATE categories SET dirty = 0 WHERE id IN (:ids)")
-    suspend fun markClean(ids: List<String>)
+    suspend fun markClean(ids: List<String>): Unit
 }
 
 @Dao
@@ -33,14 +33,14 @@ interface TransactionDao {
     suspend fun byId(id: String): TransactionEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsert(item: TransactionEntity)
+    suspend fun upsert(item: TransactionEntity): Unit
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun upsertAll(items: List<TransactionEntity>)
+    suspend fun upsertAll(items: List<TransactionEntity>): Unit
 
     @Query("UPDATE transactions SET dirty = 0 WHERE id IN (:ids)")
-    suspend fun markClean(ids: List<String>)
+    suspend fun markClean(ids: List<String>): Unit
 
     @Query("UPDATE transactions SET deletedAt = :deletedAt, dirty = 1 WHERE id = :id")
-    suspend fun softDelete(id: String, deletedAt: String)
+    suspend fun softDelete(id: String, deletedAt: String): Unit
 }
