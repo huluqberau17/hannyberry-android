@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hannyberry.data.local.TransactionEntity
 import com.hannyberry.ui.components.ActionButton
@@ -277,23 +278,45 @@ private fun TransactionRow(item: TransactionEntity) {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f),
+            ) {
                 Text(
                     TYPE_LABELS[item.transactionType] ?: item.transactionType,
                     fontWeight = FontWeight.SemiBold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                 )
                 Text(item.transactionDate, style = MaterialTheme.typography.bodySmall)
-                item.notes?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                item.notes?.takeIf { it.isNotBlank() }?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.bodySmall,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
-            Column(horizontalAlignment = Alignment.End) {
+            Column(
+                modifier = Modifier.padding(start = 10.dp),
+                horizontalAlignment = Alignment.End,
+            ) {
                 Text(
                     text = formatRupiah(item.amount),
                     fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    softWrap = false,
+                    overflow = TextOverflow.Clip,
                     color = if (item.transactionType == "INCOME") MaterialTheme.colorScheme.primary
                     else MaterialTheme.colorScheme.error,
                 )
                 if (item.dirty) {
-                    Text("belum tersinkron", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        "belum tersinkron",
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
                 }
             }
         }
