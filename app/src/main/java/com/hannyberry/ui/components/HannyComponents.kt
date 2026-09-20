@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.hannyberry.ui.theme.Berry
 import com.hannyberry.ui.theme.BerryDark
 import com.hannyberry.ui.theme.HannyBerryTheme
 import com.hannyberry.ui.theme.Ink
