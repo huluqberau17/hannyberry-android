@@ -1,11 +1,19 @@
 package com.hannyberry.ui
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -18,123 +26,85 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.hannyberry.ui.components.ActionButton
-import com.hannyberry.ui.theme.Cream
-import com.hannyberry.ui.theme.HannyBerryTheme
+import com.hannyberry.ui.components.StatCard
 
 @Composable
-fun HannyBerryApp() {
+fun MainScreen(onLogout: () -> Unit) {
     var currentTab by remember { mutableStateOf(0) }
-    
+
     Scaffold(
         bottomBar = {
-            NavigationBar(
-                containerColor = com.hannyberry.ui.theme.Cream
-            ) {
+            NavigationBar {
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = "Dashboard") },
+                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
                     label = { Text("Beranda") },
                     selected = currentTab == 0,
-                    onClick = { currentTab = 0 }
+                    onClick = { currentTab = 0 },
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.Add, contentDescription = "Tambah Transaksi") },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
                     label = { Text("Transaksi") },
                     selected = currentTab == 1,
-                    onClick = { currentTab = 1 }
+                    onClick = { currentTab = 1 },
                 )
                 NavigationBarItem(
-                    icon = { Icon(Icons.Default.BarChart, contentDescription = "Laporan") },
+                    icon = { Icon(Icons.Default.List, contentDescription = null) },
                     label = { Text("Laporan") },
                     selected = currentTab == 2,
-                    onClick = { currentTab = 2 }
+                    onClick = { currentTab = 2 },
                 )
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
         when (currentTab) {
-            0 -> HomeScreen(paddingValues)
-            1 -> TransactionScreen(paddingValues)
-            2 -> ReportScreen(paddingValues)
+            0 -> HomeTab(padding, onLogout)
+            1 -> TransactionsTab(padding)
+            else -> ReportsTab(padding)
         }
     }
 }
 
 @Composable
-fun HomeScreen(paddingValues: PaddingValues) {
-    Box(modifier = Modifier.padding(paddingValues)) {
+private fun ScreenColumn(padding: PaddingValues, content: @Composable () -> Unit) {
+    Box(modifier = Modifier.padding(padding)) {
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            modifier = Modifier.fillMaxSize().padding(20.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            Text(
-                text = "HannyBerry",
-                style = com.hannyberry.ui.theme.Typography.headlineLarge,
-                color = com.hannyberry.ui.theme.Ink
-            )
-            
-            Text(
-                text = "Kelola keuangan usaha stroberimu dengan mudah",
-                style = com.hannyberry.ui.theme.Typography.bodyMedium,
-                color = com.hannyberry.ui.theme.Ink.copy(alpha = 0.7f)
-            )
-            
-            ActionButton(
-                text = "+ Tambah Transaksi Baru",
-                onClick = {},
-                fullWidth = true
-            )
+            Spacer(modifier = Modifier.height(12.dp))
+            content()
         }
     }
 }
 
 @Composable
-fun TransactionScreen(paddingValues: PaddingValues) {
-    Box(modifier = Modifier.padding(paddingValues)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            Text(
-                text = "Riwayat Transaksi",
-                style = com.hannyberry.ui.theme.Typography.headlineMedium
-            )
-            
-            Text(
-                text = "Belum ada transaksi.",
-                style = com.hannyberry.ui.theme.Typography.bodyLarge
-            )
-        }
+private fun HomeTab(padding: PaddingValues, onLogout: () -> Unit) {
+    ScreenColumn(padding) {
+        Text("HannyBerry", style = MaterialTheme.typography.headlineMedium)
+        Text("Ringkasan usaha stroberi", style = MaterialTheme.typography.bodyMedium)
+
+        StatCard(title = "Laba Bersih", value = "Rp 0", subtitle = "Belum ada transaksi")
+        StatCard(title = "Pendapatan", value = "Rp 0", subtitle = "Bulan ini")
+        StatCard(title = "Pengeluaran", value = "Rp 0", subtitle = "Bulan ini", isPositive = false)
+
+        ActionButton(text = "+ Tambah Transaksi", onClick = {}, fullWidth = true)
+        ActionButton(text = "Keluar", onClick = onLogout, fullWidth = true)
     }
 }
 
 @Composable
-fun ReportScreen(paddingValues: PaddingValues) {
-    Box(modifier = Modifier.padding(paddingValues)) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            Spacer(modifier = Modifier.height(32.dp))
-            
-            Text(
-                text = "Laporan Keuangan",
-                style = com.hannyberry.ui.theme.Typography.headlineMedium
-            )
-            
-            Text(
-                text = "Data laporan akan tersedia setelah ada transaksi.",
-                style = com.hannyberry.ui.theme.Typography.bodyLarge
-            )
-        }
+private fun TransactionsTab(padding: PaddingValues) {
+    ScreenColumn(padding) {
+        Text("Riwayat Transaksi", style = MaterialTheme.typography.headlineMedium)
+        Text("Belum ada transaksi tersimpan.", style = MaterialTheme.typography.bodyMedium)
+        ActionButton(text = "+ Tambah Transaksi", onClick = {}, fullWidth = true)
+    }
+}
+
+@Composable
+private fun ReportsTab(padding: PaddingValues) {
+    ScreenColumn(padding) {
+        Text("Laporan", style = MaterialTheme.typography.headlineMedium)
+        Text("Laporan akan tersedia setelah ada transaksi.", style = MaterialTheme.typography.bodyMedium)
     }
 }

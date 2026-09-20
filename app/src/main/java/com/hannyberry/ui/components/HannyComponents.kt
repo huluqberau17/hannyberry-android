@@ -1,24 +1,32 @@
 package com.hannyberry.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import com.hannyberry.ui.theme.Berry
 import com.hannyberry.ui.theme.BerryDark
-import com.hannyberry.ui.theme.HannyBerryTheme
 import com.hannyberry.ui.theme.Ink
 import com.hannyberry.ui.theme.Leaf
-import com.hannyberry.ui.theme.SoftGreen
-import com.hannyberry.ui.theme.Typography
 
 @Composable
 fun StatCard(
@@ -29,53 +37,41 @@ fun StatCard(
     isPositive: Boolean = true,
 ) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surface),
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        )
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp),
     ) {
         Column(
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            modifier = Modifier.padding(18.dp).fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Text(
                 text = title,
-                style = Typography.bodyMedium,
-                color = Ink.copy(alpha = 0.7f)
+                style = MaterialTheme.typography.bodyMedium,
+                color = Ink.copy(alpha = 0.7f),
             )
-            
             Row(
                 verticalAlignment = Alignment.Bottom,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 Text(
                     text = value,
-                    style = Typography.headlineLarge,
+                    style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = if (isPositive) BerryDark else Color(0xFFB3261E)
+                    color = if (isPositive) BerryDark else Color(0xFFB3261E),
                 )
-                
-                if (!subtitle.isNullOrEmpty()) {
+                subtitle?.takeIf { it.isNotBlank() }?.let { label ->
                     Text(
-                        text = subtitle,
-                        style = Typography.labelSmall,
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall,
                         color = if (isPositive) Leaf else Color(0xFFB3261E),
-                        fontWeight = FontWeight.Medium
+                        fontWeight = FontWeight.Medium,
                     )
                 }
             }
-            
-            if (subtitle != null && !subtitle.isEmpty()) {
-                HorizontalDivider(
-                    modifier = Modifier.padding(top = 4.dp),
-                    color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
-                )
+            if (!subtitle.isNullOrBlank()) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.15f))
             }
         }
     }
@@ -87,22 +83,23 @@ fun ActionButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     fullWidth: Boolean = false,
+    enabled: Boolean = true,
 ) {
     Button(
         onClick = onClick,
-        modifier = modifier
-            .then(if (fullWidth) Modifier.fillMaxWidth() else Modifier),
+        enabled = enabled,
+        modifier = modifier.then(if (fullWidth) Modifier.fillMaxWidth() else Modifier),
         shape = RoundedCornerShape(12.dp),
         colors = ButtonDefaults.buttonColors(
             containerColor = Berry,
-            contentColor = Color.White
+            contentColor = Color.White,
         ),
-        elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 2.dp),
     ) {
         Text(
             text = text,
-            style = Typography.labelLarge,
-            fontWeight = FontWeight.SemiBold
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
         )
     }
 }
@@ -114,20 +111,23 @@ fun InputField(
     onValueChange: (String) -> Unit,
     placeholder: String = "",
     singleLine: Boolean = true,
+    isPassword: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     OutlinedTextField(
         value = value,
         onValueChange = onValueChange,
-        label = { Text(label, color = Ink.copy(alpha = 0.7f)) },
-        placeholder = { Text(placeholder, color = Ink.copy(alpha = 0.5f)) },
+        label = { Text(label) },
+        placeholder = { Text(placeholder) },
         modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(12.dp),
-        colors = TextFieldDefaults.outlinedTextFieldColors(
-            focusedBorderColor = Berry,
-            unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-            backgroundColor = MaterialTheme.colorScheme.surface
+        singleLine = singleLine,
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else VisualTransformation.None,
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedIndicatorColor = Berry,
+            unfocusedIndicatorColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f),
         ),
-        singleLine = singleLine
     )
 }
