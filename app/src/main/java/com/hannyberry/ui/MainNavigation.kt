@@ -27,6 +27,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -258,6 +259,7 @@ private fun OverviewTab(
 @Composable
 private fun AddTransactionTab(padding: PaddingValues, viewModel: TransactionViewModel) {
     val form by viewModel.form.collectAsState()
+    var categoryQuery by remember { mutableStateOf("") }
 
     ScreenColumn(padding) {
         Text("Tambah Transaksi", style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
@@ -278,16 +280,31 @@ private fun AddTransactionTab(padding: PaddingValues, viewModel: TransactionView
 
         if (form.categories.isNotEmpty()) {
             Text("Kategori", style = MaterialTheme.typography.labelLarge)
-            Row(
-                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                form.categories.forEach { category ->
-                    FilterChip(
-                        selected = form.categoryId == category.id,
-                        onClick = { viewModel.categoryChanged(category) },
-                        label = { Text(category.name) },
-                    )
+            Box(modifier = Modifier.fillMaxWidth()) {
+                OutlinedTextField(
+                    value = categoryQuery,
+                    onValueChange = { categoryQuery = it },
+                    modifier = Modifier.fillMaxWidth(),
+                    label = { Text(form.categoryName ?: "Cari kategori") },
+                    placeholder = { Text("Ketik nama kategori") },
+                    singleLine = true,
+                )
+                DropdownMenu(
+                    expanded = categoryQuery.isNotBlank(),
+                    onDismissRequest = { categoryQuery = "" },
+                ) {
+                    form.categories
+                        .filter { it.name.contains(categoryQuery, ignoreCase = true) }
+                        .take(8)
+                        .forEach { category ->
+                            DropdownMenuItem(
+                                text = { Text(category.name) },
+                                onClick = {
+                                    viewModel.categoryChanged(category)
+                                    categoryQuery = ""
+                                },
+                            )
+                        }
                 }
             }
         }
