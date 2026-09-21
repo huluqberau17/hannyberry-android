@@ -21,8 +21,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.List
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,6 +33,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,40 +67,134 @@ private val CHIP_LABELS = mapOf(
 @Composable
 fun MainScreen(
     transactionViewModel: TransactionViewModel,
+    authViewModel: AuthViewModel,
     onLogout: () -> Unit,
 ) {
     var currentTab by remember { mutableStateOf(0) }
+    var profileOpen by remember { mutableStateOf(false) }
+    var editOpen by remember { mutableStateOf(false) }
+    val authState by authViewModel.state.collectAsState()
 
-    Scaffold(
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Home, contentDescription = null) },
-                    label = { Text("Beranda") },
-                    selected = currentTab == 0,
-                    onClick = { currentTab = 0 },
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
-                    label = { Text("Tambah") },
-                    selected = currentTab == 1,
-                    onClick = { currentTab = 1 },
-                )
-                NavigationBarItem(
-                    icon = { Icon(Icons.Default.List, contentDescription = null) },
-                    label = { Text("Riwayat") },
-                    selected = currentTab == 2,
-                    onClick = { currentTab = 2 },
-                )
+    Column(modifier = Modifier.fillMaxSize()) {
+        // Header sendiri, tanpa TopAppBar eksperimental, supaya stabil di semua versi Compose.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = "HannyBerry",
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+            )
+            Box {
+                TextButton(onClick = { profileOpen = true }) {
+                    val initial = authState.profile?.name?.trim()?.takeIf { it.isNotEmpty() }?.first()?.uppercase() ?: "?"
+                    Text("[ $initial ]  ${authState.profile?.name ?: "Profil"}")
+                }
+                DropdownMenu(expanded = profileOpen, onDismissRequest = { profileOpen = false }) {
+                    DropdownMenuItem(
+                        text = { Text(authState.profile?.name ?: "Profil") },
+                        onClick = { profileOpen = false },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(authState.profile?.email ?: "-") },
+                        onClick = { profileOpen = false },
+                    )
+                    DropdownMenuItem(
+                        text = { Text(if (authState.profile?.role == "OWNER") "Administrator" else "Member") },
+                        onClick = { profileOpen = false },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Edit Profil") },
+                        onClick = { profileOpen = false; editOpen = true },
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Keluar") },
+                        onClick = { profileOpen = false; onLogout() },
+                    )
+                }
             }
         }
-    ) { padding ->
-        when (currentTab) {
-            0 -> OverviewTab(padding, transactionViewModel, onLogout)
-            1 -> AddTransactionTab(padding, transactionViewModel)
-            else -> HistoryTab(padding, transactionViewModel)
+
+        Scaffold(
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Home, contentDescription = null) },
+                        label = { Text("Beranda") },
+                        selected = currentTab == 0,
+                        onClick = { currentTab = 0 },
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                        label = { Text("Tambah") },
+                        selected = currentTab == 1,
+                        onClick = { currentTab = 1 },
+                    )
+                    NavigationBarItem(
+                        icon = { Icon(Icons.Default.List, contentDescription = null) },
+                        label = { Text("Riwayat") },
+                        selected = currentTab == 2,
+                        onClick = { currentTab = 2 },
+                    )
+                }
+            }
+        ) { padding ->
+            when (currentTab) {
+                0 -> OverviewTab(padding, transactionViewModel)
+                1 -> AddTransactionTab(padding, transactionViewModel)
+                else -> HistoryTab(padding, transactionViewModel)
+            }
         }
     }
+
+    if (editOpen) {
+        EditProfileDialog(
+            state = authState,
+            onDismiss = { editOpen = false },
+            onSave = { name -> authViewModel.renameProfile(name); editOpen = false },
+        )
+    }
+}
+
+@Composable
+private fun EditProfileDialog(
+    state: AuthUiState,
+    onDismiss: () -> Unit,
+    onSave: (String) -> Unit,
+) {
+    var name by remember(state.profile?.name) { mutableStateOf(state.profile?.name ?: "") }
+    val isAdmin = state.profile?.role == "OWNER"
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Edit Profil") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                InputField(
+                    label = "Nama",
+                    value = name,
+                    onValueChange = { name = it },
+                )
+                Text("Email: ${state.profile?.email ?: "-"}", style = MaterialTheme.typography.bodySmall)
+                Text(
+                    "Role: ${if (isAdmin) "Administrator" else "Member"}",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = { onSave(name) }, enabled = !state.profileLoading) {
+                Text(if (state.profileLoading) "Menyimpan…" else "Simpan")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Batal") }
+        },
+    )
 }
 
 @Composable
@@ -123,7 +221,6 @@ private fun ScreenColumn(padding: PaddingValues, content: @Composable () -> Unit
 private fun OverviewTab(
     padding: PaddingValues,
     viewModel: TransactionViewModel,
-    onLogout: () -> Unit,
 ) {
     val transactions by viewModel.transactions.collectAsState()
     val syncing by viewModel.syncing.collectAsState()
@@ -155,7 +252,6 @@ private fun OverviewTab(
             enabled = !syncing,
         )
         message?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
-        ActionButton(text = "Keluar", onClick = onLogout, fullWidth = true)
     }
 }
 

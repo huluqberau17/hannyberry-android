@@ -3,6 +3,7 @@ package com.hannyberry.data.remote
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.PATCH
 import retrofit2.http.POST
 
 interface HannyBerryApi {
@@ -11,6 +12,15 @@ interface HannyBerryApi {
 
     @POST("auth/login")
     suspend fun login(@Body body: LoginRequest): Response<LoginResponse>
+
+    @POST("auth/signup")
+    suspend fun signup(@Body body: SignupRequest): Response<UserDto>
+
+    @GET("auth/me")
+    suspend fun me(): Response<UserDto>
+
+    @PATCH("auth/profile")
+    suspend fun updateProfile(@Body body: ProfileUpdate): Response<UserDto>
 
     @GET("categories")
     suspend fun categories(): Response<List<CategoryDto>>
