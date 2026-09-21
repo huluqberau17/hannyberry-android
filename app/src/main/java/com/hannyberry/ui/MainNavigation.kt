@@ -28,6 +28,7 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedTextField
+import coil.compose.AsyncImage
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -47,6 +48,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.hannyberry.data.local.TransactionEntity
+import com.hannyberry.data.remote.ApiConfig
 import com.hannyberry.ui.components.ActionButton
 import com.hannyberry.ui.components.InputField
 import com.hannyberry.ui.components.StatCard
@@ -92,20 +94,22 @@ fun MainScreen(
             )
             Box {
                 TextButton(onClick = { profileOpen = true }) {
-                    val initial = authState.profile?.name?.trim()?.takeIf { it.isNotEmpty() }?.first()?.uppercase() ?: "?"
-                    Text("[ $initial ]  ${authState.profile?.name ?: "Profil"}")
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        val avatarUrl = ApiConfig.BASE_URL + "auth/avatar/" + (authState.profile?.avatarFilename ?: "")
+                        AsyncImage(
+                            model = if (authState.profile?.avatarFilename != null) avatarUrl else null,
+                            contentDescription = "Profil Foto",
+                            modifier = Modifier.size(24.dp),
+                            error = painterResource(id = R.drawable.hannyberry_logo),
+                        )
+                        Text(
+                            text = (authState.profile?.name?.trim()?.takeIf { it.isNotEmpty() }?.substring(0, 1) ?: "?").uppercase(),
+                        )
+                    }
                 }
                 DropdownMenu(expanded = profileOpen, onDismissRequest = { profileOpen = false }) {
                     DropdownMenuItem(
                         text = { Text(authState.profile?.name ?: "Profil") },
-                        onClick = { profileOpen = false },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(authState.profile?.email ?: "-") },
-                        onClick = { profileOpen = false },
-                    )
-                    DropdownMenuItem(
-                        text = { Text(if (authState.profile?.role == "OWNER") "Administrator" else "Member") },
                         onClick = { profileOpen = false },
                     )
                     DropdownMenuItem(
